@@ -33,6 +33,7 @@ public class LNZTreeView: UIView {
 
         
     @IBInspectable public var indentationWidth: CGFloat = 10
+    @IBInspectable public var isExpandOnSelect: Bool = true
     @IBInspectable public var isEditing: Bool {
         get { return tableView.isEditing }
         set { tableView.isEditing = newValue }
@@ -42,6 +43,7 @@ public class LNZTreeView: UIView {
         get { return tableView.rowHeight }
         set { tableView.rowHeight = newValue }
     }
+    
     
     @IBInspectable public var allowsSelectionDuringEditing: Bool {
         get { return tableView.allowsSelectionDuringEditing }
@@ -111,8 +113,20 @@ public class LNZTreeView: UIView {
     
     open override func didMoveToSuperview() {
         super.didMoveToSuperview()
-
         tableView.reloadData()
+    }
+    
+    /**
+     This reload ui for nodes.
+     - parameter node: The node to be update.
+     - parameter section: The index of the section of which you are requesting the number of rows.
+     */
+    public func reloadNode(node: TreeNodeProtocol, _ section: Int = 0) {
+        guard indexPathForNode(node, inSection: section) != nil else {
+            return
+        }
+        tableView.reloadData()
+//        tableView.reloadRows(at: [indexPath], with: .automatic)
     }
     
     /**
@@ -120,7 +134,6 @@ public class LNZTreeView: UIView {
      */
     public func resetTree() {
         nodesForSection.removeAll()
-        
         tableView.reloadData()
     }
     
@@ -161,7 +174,7 @@ public class LNZTreeView: UIView {
         
         let minimalNode = nodes[indexPath.row]
         guard minimalNode.isExpanded != toggle else { return true }
-        tableView(tableView, didSelectRowAt: indexPath)
+        self.toggle(indexPath: indexPath)
         return minimalNode.isExpanded == toggle
     }
     
@@ -186,6 +199,17 @@ public class LNZTreeView: UIView {
     @discardableResult
     public func collapse(node: TreeNodeProtocol, inSection section: Int) -> Bool {
         return toggleExpanded(false, node: node, inSection: section)
+    }
+    
+    public func toggle(node: TreeNodeProtocol, inSection section: Int) -> Bool {
+        guard node.isExpandable,
+            let nodes = nodesForSection[section],
+            let indexPath = indexPathForNode(node, inSection: section) else {
+                return false
+        }
+        
+        let minimalNode = nodes[indexPath.row]
+        return toggleExpanded(!minimalNode.isExpanded, node: node, inSection: section)
     }
     
     /**
@@ -323,7 +347,6 @@ public class LNZTreeView: UIView {
         newNode.isExpandable = fullNewNode.isExpandable
         newNode.indentationLevel = indentationLevel
         newNode.parent = parentNode
-
         nodesForSection[indexPath.section]?.insert(newNode, at: realIndexPath.item)
         tableView.insertRows(at: [realIndexPath], with: .right)
     }
@@ -394,6 +417,55 @@ public class LNZTreeView: UIView {
         
         return realIndexPath
     }
+    
+    private func toggle(indexPath: IndexPath) {
+        guard var nodes = nodesForSection[indexPath.section],
+            let indexInParent = self.indexInParent(forNodeAt: indexPath) else {
+                fatalError("Something wrong here")
+        }
+        let node = nodes[indexPath.row]
+        
+        guard node.isExpandable else {
+            return
+        }
+        
+        CATransaction.begin()
+        tableView.beginUpdates()
+        defer {
+            CATransaction.commit()
+            tableView.endUpdates()
+        }
+        
+        tableView.reloadRows(at: [indexPath], with: .fade)
+        
+        if node.isExpanded {
+            let range = closeNode(node, atIndex: indexPath.row, in: &nodes)
+            nodesForSection[indexPath.section] = nodes
+            
+            if let deleteRange = range {
+                //Updating the tableView
+                let indexPaths = Array(deleteRange).map { IndexPath(row: $0, section: indexPath.section) }
+                tableView.deleteRows(at: indexPaths, with: tableViewRowAnimation)
+            }
+            CATransaction.setCompletionBlock {[weak self] in
+                guard let strongSelf = self else { return }
+                strongSelf.delegate?.treeView?(strongSelf, didCollapseNodeAt: indexInParent, forParentNode: node.parent)
+            }
+        } else {
+            let range = expandNode(node, at: indexPath, in: &nodes)
+            nodesForSection[indexPath.section] = nodes
+            
+            if let insertRange = range {
+                //Updating the tableView
+                let indexPaths = Array(insertRange).map { IndexPath(row: $0, section: indexPath.section) }
+                tableView.insertRows(at: indexPaths, with: tableViewRowAnimation)
+            }
+            CATransaction.setCompletionBlock {[weak self] in
+                guard let strongSelf = self else { return }
+                strongSelf.delegate?.treeView?(strongSelf, didExpandNodeAt: indexInParent, forParentNode: node.parent)
+            }
+        }
+    }
 }
 
 //MARK: - UITableViewDataSource
@@ -413,7 +485,6 @@ extension LNZTreeView: UITableViewDataSource {
                 }
                 let node = MinimalTreeNode(identifier: fullNode.identifier)
                 node.isExpandable = fullNode.isExpandable
-
                 nodes.append(node)
                 nodesForSection[section] = nodes
             }
@@ -476,7 +547,7 @@ extension LNZTreeView: UITableViewDelegate {
     }
     
     public func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        guard var nodes = nodesForSection[indexPath.section],
+        guard let nodes = nodesForSection[indexPath.section],
             let indexInParent = self.indexInParent(forNodeAt: indexPath) else {
                 fatalError("Something wrong here")
         }
@@ -485,52 +556,15 @@ extension LNZTreeView: UITableViewDelegate {
     }
     
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard var nodes = nodesForSection[indexPath.section],
+        guard let nodes = nodesForSection[indexPath.section],
             let indexInParent = self.indexInParent(forNodeAt: indexPath) else {
-            fatalError("Something wrong here")
+                fatalError("Something wrong here")
         }
         let node = nodes[indexPath.row]
-        
-        guard node.isExpandable else {
-            delegate?.treeView?(self, didSelectNodeAt: indexInParent, forParentNode: node.parent)
-            return
+        if isExpandOnSelect  {
+            toggle(indexPath: indexPath)
         }
-        CATransaction.begin()
-        tableView.beginUpdates()
-        defer {
-            CATransaction.commit()
-            tableView.endUpdates()
-        }
-        
-        tableView.reloadRows(at: [indexPath], with: .fade)
-        
-        if node.isExpanded {
-            let range = closeNode(node, atIndex: indexPath.row, in: &nodes)
-            nodesForSection[indexPath.section] = nodes
-            
-            if let deleteRange = range {
-                //Updating the tableView
-                let indexPaths = Array(deleteRange).map { IndexPath(row: $0, section: indexPath.section) }
-                tableView.deleteRows(at: indexPaths, with: tableViewRowAnimation)
-            }
-            CATransaction.setCompletionBlock {[weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.delegate?.treeView?(strongSelf, didCollapseNodeAt: indexInParent, forParentNode: node.parent)
-            }
-        } else {
-            let range = expandNode(node, at: indexPath, in: &nodes)
-            nodesForSection[indexPath.section] = nodes
-            
-            if let insertRange = range {
-                //Updating the tableView
-                let indexPaths = Array(insertRange).map { IndexPath(row: $0, section: indexPath.section) }
-                tableView.insertRows(at: indexPaths, with: tableViewRowAnimation)
-            }
-            CATransaction.setCompletionBlock {[weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.delegate?.treeView?(strongSelf, didExpandNodeAt: indexInParent, forParentNode: node.parent)
-            }
-        }
+        delegate?.treeView?(self, didSelectNodeAt: indexInParent, forParentNode: node.parent)
     }
     
     private func expandNode(_ node: MinimalTreeNode, at indexPath: IndexPath, in nodes: inout [MinimalTreeNode]) -> CountableClosedRange<Int>? {

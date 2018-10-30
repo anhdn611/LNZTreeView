@@ -11,6 +11,7 @@ import LNZTreeView
 
 class CustomUITableViewCell: UITableViewCell
 {
+    
     override func layoutSubviews() {
         super.layoutSubviews();
         
@@ -24,6 +25,7 @@ class CustomUITableViewCell: UITableViewCell
 
 
 class Node: NSObject, TreeNodeProtocol {
+    
     var identifier: String
     var isExpandable: Bool {
         return children != nil
@@ -41,21 +43,23 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var treeView: LNZTreeView!
     var root = [Node]()
+    var selectedNode: Node?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        treeView.register(CustomUITableViewCell.self, forCellReuseIdentifier: "cell")
+        treeView.register(UINib(nibName: "ExpandArrowCell", bundle: nil), forCellReuseIdentifier: "ExpandArrowCell")
 
         treeView.tableViewRowAnimation = .right
-        treeView.keyboardDismissMode = .none
+
+        treeView.isExpandOnSelect = false
         generateRandomNodes()
         treeView.resetTree()
     }
     
     func generateRandomNodes() {
-        let depth = 3
-        let rootSize = 30
+        let depth = 2
+        let rootSize = 5
         
         var root: [Node]!
         
@@ -70,7 +74,7 @@ class ViewController: UIViewController {
             var thisDepthLevelNodes = [Node]()
             for node in lastNodes {
                 guard arc4random()%2 == 1 else { continue }
-                let childrenNumber = Int(arc4random()%20 + 1)
+                let childrenNumber = Int(arc4random()%5 + 1)
                 let children = generateNodes(childrenNumber, depthLevel: i)
                 node.children = children
                 thisDepthLevelNodes += children
@@ -126,20 +130,22 @@ extension ViewController: LNZTreeViewDataSource {
             node = root[indexPath.row]
         }
         
-        let cell = treeView.dequeueReusableCell(withIdentifier: "cell", for: node, inSection: indexPath.section)
+        let cell = treeView.dequeueReusableCell(withIdentifier: "ExpandArrowCell", for: node, inSection: indexPath.section) as! ExpandArrowCell
 
         if node.isExpandable {
             if isExpanded {
-                cell.imageView?.image = #imageLiteral(resourceName: "index_folder_indicator_open")
+                cell.expandButton.setImage(UIImage(named: "index_folder_indicator_open"), for: .normal)
             } else {
-                cell.imageView?.image = #imageLiteral(resourceName: "index_folder_indicator")
+                cell.expandButton.setImage(UIImage(named: "index_folder_indicator"), for: .normal)
             }
         } else {
-            cell.imageView?.image = nil
+            cell.expandButton.setImage(nil, for: .normal)
         }
-        
-        cell.textLabel?.text = node.identifier
-        
+        cell.onExpand = {
+            treeView.toggle(node: node, inSection: 0)
+        }
+        cell.nodeTitleLabel?.text = node.identifier
+        cell.accessoryType = selectedNode == node ? .checkmark : .none
         return cell
     }
 }
@@ -147,5 +153,17 @@ extension ViewController: LNZTreeViewDataSource {
 extension ViewController: LNZTreeViewDelegate {
     func treeView(_ treeView: LNZTreeView, heightForNodeAt indexPath: IndexPath, forParentNode parentNode: TreeNodeProtocol?) -> CGFloat {
         return 60
+    }
+    
+    func treeView(_ treeView: LNZTreeView, didSelectNodeAt indexPath: IndexPath, forParentNode parentNode: TreeNodeProtocol?) {
+        
+        if let parent = parentNode as? Node {
+            selectedNode = parent.children![indexPath.row]
+        } else {
+            selectedNode = root[indexPath.row]
+        }
+        
+        treeView.reloadNode(node: selectedNode!)
+        
     }
 }

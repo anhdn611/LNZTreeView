@@ -23,6 +23,8 @@
 		50D0A4661FB22B3300DE8E02 /* TreeViewMockDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D0A4381FB22A6300DE8E02 /* TreeViewMockDataSource.swift */; };
 		50D0A4671FB22B3300DE8E02 /* TestNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D0A4391FB22A6300DE8E02 /* TestNode.swift */; };
 		50D0A4681FB22B3300DE8E02 /* TreeViewMockDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D0A43A1FB22A6300DE8E02 /* TreeViewMockDelegate.swift */; };
+		EC3D3E982188099700FC9227 /* ExpandArrowCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC3D3E962188099700FC9227 /* ExpandArrowCell.swift */; };
+		EC3D3E992188099700FC9227 /* ExpandArrowCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = EC3D3E972188099700FC9227 /* ExpandArrowCell.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +85,8 @@
 		50D0A44A1FB22ABF00DE8E02 /* LNZTreeViewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LNZTreeViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		50D0A4531FB22ABF00DE8E02 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50D0A4641FB22B2200DE8E02 /* LNZTreeViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LNZTreeViewTests.swift; sourceTree = "<group>"; };
+		EC3D3E962188099700FC9227 /* ExpandArrowCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandArrowCell.swift; sourceTree = "<group>"; };
+		EC3D3E972188099700FC9227 /* ExpandArrowCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ExpandArrowCell.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +145,8 @@
 				50D0A4191FB2215300DE8E02 /* Assets.xcassets */,
 				50D0A41B1FB2215300DE8E02 /* LaunchScreen.storyboard */,
 				50D0A41E1FB2215300DE8E02 /* Info.plist */,
+				EC3D3E962188099700FC9227 /* ExpandArrowCell.swift */,
+				EC3D3E972188099700FC9227 /* ExpandArrowCell.xib */,
 			);
 			path = LNZTreeViewDemo;
 			sourceTree = "<group>";
@@ -303,6 +309,7 @@
 				50D0A41D1FB2215300DE8E02 /* LaunchScreen.storyboard in Resources */,
 				50D0A41A1FB2215300DE8E02 /* Assets.xcassets in Resources */,
 				50D0A4181FB2215300DE8E02 /* Main.storyboard in Resources */,
+				EC3D3E992188099700FC9227 /* ExpandArrowCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -327,6 +334,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC3D3E982188099700FC9227 /* ExpandArrowCell.swift in Sources */,
 				50D0A4151FB2215300DE8E02 /* ViewController.swift in Sources */,
 				50D0A4131FB2215300DE8E02 /* AppDelegate.swift in Sources */,
 			);
@@ -509,8 +517,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = ZJ8CN8P2Z5;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = LNZTreeViewDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -526,8 +534,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = ZJ8CN8P2Z5;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = LNZTreeViewDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

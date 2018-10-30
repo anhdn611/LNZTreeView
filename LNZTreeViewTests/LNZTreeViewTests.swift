@@ -51,7 +51,7 @@ class LNZTreeViewTests: XCTestCase {
         XCTAssertEqual(treeView.numberOfTotalNodesInSection(0), 1)
         
         let expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
 
         let expanded = treeView.expand(node: node, inSection: 0)
         XCTAssertTrue(expanded)
@@ -87,7 +87,7 @@ class LNZTreeViewTests: XCTestCase {
         XCTAssertEqual(treeView.numberOfNodesForSection(0, inParent: nodes[0]), 0)
 
         let expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
         
         let expanded = treeView.expand(node: nodes[0], inSection: 0)
         XCTAssertTrue(expanded)
@@ -121,7 +121,7 @@ class LNZTreeViewTests: XCTestCase {
         window.addSubview(treeView)
         
         var expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
 
         let expanded = treeView.expand(node: nodes[0], inSection: 0)
         XCTAssertTrue(expanded)
@@ -132,7 +132,7 @@ class LNZTreeViewTests: XCTestCase {
         XCTAssertEqual(treeView.numberOfNodesForSection(0, inParent: nodes[0]), (nodes[0].children?.count ?? 0))
         
         expect = expectation(description: "collapseWaiter")
-        delegate.expectation = expect
+        delegate.didCollapseNodeExpectation = expect
 
 
         let closed = treeView.collapse(node: nodes[0], inSection: 0)
@@ -194,21 +194,21 @@ class LNZTreeViewTests: XCTestCase {
         window.addSubview(treeView)
 
         var expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
 
         treeView.expand(node: nodes[0], inSection: 0)
         
         waitForExpectations(timeout: 1, handler: nil)
         
         expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
         
         treeView.expand(node: nodes[1], inSection: 0)
         
         waitForExpectations(timeout: 1, handler: nil)
         
         expect = expectation(description: "collapseWaiter")
-        delegate.expectation = expect
+        delegate.didCollapseNodeExpectation = expect
 
         var collapsed = treeView.collapse(node: nodes[1], inSection: 0)
         XCTAssertTrue(collapsed)
@@ -219,7 +219,7 @@ class LNZTreeViewTests: XCTestCase {
         XCTAssertEqual(treeView.numberOfNodesForSection(0, inParent: nodes[1]), 0)
 
         expect = expectation(description: "collapseWaiter")
-        delegate.expectation = expect
+        delegate.didCollapseNodeExpectation = expect
 
         collapsed = treeView.collapse(node: nodes[0], inSection: 0)
         XCTAssertTrue(collapsed)
@@ -245,7 +245,7 @@ class LNZTreeViewTests: XCTestCase {
         window.addSubview(treeView)
         
         let expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
 
         var expanded = treeView.expand(node: node, inSection: 0)
         waitForExpectations(timeout: 1, handler: nil)
@@ -272,7 +272,7 @@ class LNZTreeViewTests: XCTestCase {
         window.addSubview(treeView)
         
         var expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didExpandNodeExpectation = expect
 
         let expanded = treeView.expand(node: node, inSection: 0)
         XCTAssertTrue(expanded)
@@ -280,7 +280,7 @@ class LNZTreeViewTests: XCTestCase {
         waitForExpectations(timeout: 1, handler: nil)
         
         expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        delegate.didCollapseNodeExpectation = expect
 
         let collapsed = treeView.collapse(node: node, inSection: 0)
         XCTAssertTrue(collapsed)
@@ -301,25 +301,31 @@ class LNZTreeViewTests: XCTestCase {
         
         window.addSubview(treeView)
         
-        var expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        var didSelectNodeExpectation = expectation(description: "selectd node")
+        delegate.didSelectNodeExpectation = didSelectNodeExpectation
+        
+        let didExpandNodeExpectation = expectation(description: "expand parent node")
+        delegate.didExpandNodeExpectation = didExpandNodeExpectation
 
         var selected = treeView.select(node: node, inSection: 0)
         XCTAssertTrue(selected)
 
-        waitForExpectations(timeout: 1, handler: nil)
+        wait(for: [didExpandNodeExpectation, didSelectNodeExpectation], timeout: 1)
         
         XCTAssertEqual(delegate.expandedNodes, [node])
         XCTAssertTrue(delegate.collapsedNodes.isEmpty)
-        XCTAssertTrue(delegate.selectedNodes.isEmpty)
+        XCTAssertEqual(delegate.selectedNodes, [node])
 
-        expect = expectation(description: "expandWaiter")
-        delegate.expectation = expect
+        didSelectNodeExpectation = expectation(description: "selectd node")
+        delegate.didSelectNodeExpectation = didSelectNodeExpectation
+        
+        let didCollapseNodeExpectation = expectation(description: "didCollapseNodeExpectation parent node")
+        delegate.didCollapseNodeExpectation = didCollapseNodeExpectation
 
         selected = treeView.select(node: node, inSection: 0)
         XCTAssertTrue(selected)
 
-        waitForExpectations(timeout: 1, handler: nil)
+        wait(for: [didCollapseNodeExpectation, didSelectNodeExpectation], timeout: 1)
         
         XCTAssertEqual(delegate.expandedNodes, [node])
         XCTAssertEqual(delegate.collapsedNodes, [node])
@@ -343,5 +349,47 @@ class LNZTreeViewTests: XCTestCase {
         XCTAssertTrue(delegate.collapsedNodes.isEmpty)
         XCTAssertEqual(delegate.selectedNodes, [node])
 
+    }
+    
+    func testShouldSelectNodeNotExpand() {
+        // given isExpandOnSelect = false in first node
+        let childrenNodes = Array(0..<100).map { (j) -> TestNode in
+            return TestNode(identifier: "child_sec0_row\(j)", isExpandable: false, children: nil)
+        }
+        let nodes = [
+            TestNode(identifier: "sec0_row0", isExpandable: true, children: childrenNodes),
+            TestNode(identifier: "sec0_row1", isExpandable: false, children: nil)
+        ]
+        
+        dataSource.roots = [nodes]
+        delegate.roots = [nodes]
+        
+        treeView.dataSource = dataSource
+        treeView.delegate = delegate
+        // when
+        treeView.isExpandOnSelect = false
+        window.addSubview(treeView)
+        // then tree is populated
+        XCTAssertEqual(treeView.numberOfSections(), 1)
+        XCTAssertEqual(treeView.numberOfTotalNodesInSection(0), nodes.count)
+        XCTAssertEqual(treeView.numberOfNodesForSection(0, inParent: nodes[0]), 0)
+        
+        let didSelectNodeExpectation = expectation(description: "select")
+        delegate.didSelectNodeExpectation = didSelectNodeExpectation
+        
+        // when call expand
+        let expanded = treeView.select(node: nodes[0], inSection: 0)
+        // them should not expand and selected
+        XCTAssertTrue(expanded)
+        
+        wait(for: [didSelectNodeExpectation], timeout: 1)
+        
+        XCTAssertEqual(treeView.numberOfTotalNodesInSection(0), nodes.count)
+        XCTAssertEqual(treeView.numberOfNodesForSection(0, inParent: nodes[0]), 0)
+        
+        XCTAssertTrue(delegate.expandedNodes.isEmpty)
+        XCTAssertTrue(delegate.collapsedNodes.isEmpty)
+        XCTAssertEqual(delegate.selectedNodes, [nodes[0]])
+        
     }
 }
