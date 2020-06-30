@@ -91,6 +91,7 @@ public class LNZTreeView: UIView {
     private func commonInit() {
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.tableFooterView = UIView(frame: .init(x: 0, y: 0, width: 0, height: 0))
         tableView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(tableView)
         
